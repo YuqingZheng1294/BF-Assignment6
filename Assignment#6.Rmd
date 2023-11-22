@@ -1,0 +1,67 @@
+---
+title: 'Assignment #6'
+author: "YUQING ZHENG"
+date: "2023-11-21"
+output: html_document
+---
+
+```{r}
+library(fpp)
+library(fpp2)
+#import data
+AMZN <- read.csv("AMZN.csv")
+head(AMZN)
+str(AMZN)
+AMZN$Date <- as.Date(AMZN$Date)
+str(AMZN)
+adjc_ts <- ts(AMZN$Adj.Close,frequency=12,start=c(2018,01),end=c(2023,09))
+adjc_ts
+plot(adjc_ts)
+Acf(adjc_ts)
+
+adf.test(adjc_ts)
+ndiffs(adjc_ts)
+tsdisplay(adjc_ts)
+# take first order differences as indicated by ndiffs function
+adjcdiff1 <- diff(adjc_ts, differences=1)
+tsdisplay(adjcdiff1) #stationary time series data
+ndiffs(adjcdiff1)
+adf.test(adjcdiff1)
+# plot a correlogram
+Acf(adjcdiff1, lag.max=20)
+# get the autocorrelation values
+Acf(adjcdiff1, lag.max=20,plot=FALSE)
+# plot a partial correlogram
+Pacf(adjcdiff1, lag.max=20)
+# get the partial autocorrelation values
+Pacf(adjcdiff1, lag.max=20,plot=FALSE)
+
+
+#ARIMA model
+auto_fit <- auto.arima(adjc_ts,stepwise=FALSE, approximation=FALSE)
+auto_fit
+attributes(auto_fit)
+#best model: ARIMA(0,1,0) model, the time series has been differenced once, no autoregressive terms and no moving average terms in the model, and the original series has undergone first-order differencing to achieve stationarity.
+
+#Residual Analysis
+res <- residuals(auto_fit)# Store the residuals
+# Plot the residuals
+tsdisplay(res)
+Acf(res)
+Box.test(res, lag=20, type="Ljung")
+plot.ts(res)
+hist(res)
+tsdiag(auto_fit)
+
+#Perform and Plot the forecast for the next five periods
+forecast_Arima <- forecast(auto_fit,h=5)
+forecast_Arima
+plot(forecast_Arima)
+plot(adjc_ts)
+lines(forecast_Arima$fitted,col="red")
+
+#accuracy of ARIMA model
+accuracy(forecast_Arima)
+#the model's MAE is 8.618536 and MPE is 0.3734054.
+```
+
